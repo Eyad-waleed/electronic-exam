@@ -6,7 +6,7 @@ import SectionReview from './components/SectionReview';
 import ReviewScreen from './components/ReviewScreen';
 import ResultsScreen from './components/ResultsScreen';
 import './App.css';
-import { Analytics } from "./node_modules/.pnpm/node_modules/@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/react"
 
 function App() {
   const { 
