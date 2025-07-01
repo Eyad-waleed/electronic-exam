@@ -282,11 +282,15 @@ export const useExamStore = create(
 
       // Select answer
       selectAnswer: (questionNumber, choiceIndex) => {
-        const { userAnswers } = get();
+        const { userAnswers, deferredQuestions } = get();
         set({
           userAnswers: {
             ...userAnswers,
             [questionNumber]: choiceIndex
+          },
+          deferredQuestions: {
+            ...deferredQuestions,
+            [questionNumber]: false // Remove deferred flag when answered
           }
         });
       },
