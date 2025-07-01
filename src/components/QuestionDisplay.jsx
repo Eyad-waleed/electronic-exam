@@ -24,7 +24,8 @@ const QuestionDisplay = () => {
     nextQuestion,
     previousQuestion,
     getQuestionStats,
-    getCurrentExamInfo
+    getCurrentExamInfo,
+    goToQuestion // Assuming this function exists in the store
   } = useExamStore();
 
   if (!examQuestions || examQuestions.length === 0) {
@@ -51,6 +52,19 @@ const QuestionDisplay = () => {
   // Allow navigation for all question types - removed answer requirement
   const canProceed = true;
 
+  // Check if there are any deferred questions
+  const hasDeferredQuestions = Object.values(deferredQuestions).some(deferred => deferred);
+  
+  // Find the first deferred question index
+  const getFirstDeferredQuestionIndex = () => {
+    for (let i = 0; i < examQuestions.length; i++) {
+      if (deferredQuestions[examQuestions[i].question_number]) {
+        return i;
+      }
+    }
+    return -1;
+  };
+
   const handleAnswerSelect = (choiceIndex) => {
     selectAnswer(currentQuestion.question_number, choiceIndex);
   };
@@ -60,7 +74,22 @@ const QuestionDisplay = () => {
   };
 
   const handleNext = () => {
-    nextQuestion();
+    // If it's the last question and there are deferred questions, go to first deferred question
+    if (isLastQuestion && hasDeferredQuestions) {
+      const firstDeferredIndex = getFirstDeferredQuestionIndex();
+      if (firstDeferredIndex !== -1) {
+        // If goToQuestion function exists, use it; otherwise use a fallback
+        if (typeof goToQuestion === 'function') {
+          goToQuestion(firstDeferredIndex);
+        } else {
+          // Fallback: you might need to implement this based on your store structure
+          // This is a placeholder - adjust according to your actual store implementation
+          console.log('Navigate to deferred question at index:', firstDeferredIndex);
+        }
+      }
+    } else {
+      nextQuestion();
+    }
   };
 
   const handlePrevious = () => {
@@ -104,6 +133,21 @@ const QuestionDisplay = () => {
   };
 
   const stats = getQuestionStats();
+
+  // Determine button text and style based on whether it's the last question and there are deferred questions
+  const getNextButtonText = () => {
+    if (isLastQuestion && hasDeferredQuestions) {
+      return 'لديك أسئلة مؤجلة';
+    }
+    return 'التالي';
+  };
+
+  const getNextButtonMobileText = () => {
+    if (isLastQuestion && hasDeferredQuestions) {
+      return 'أسئلة مؤجلة';
+    }
+    return 'التالي';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" dir="rtl">
@@ -378,16 +422,24 @@ const QuestionDisplay = () => {
                 </div>
               </div>
 
-              {/* Next Button - Mobile Optimized */}
+              {/* Next Button - Mobile Optimized with conditional text and styling */}
               <Button
                 onClick={handleNext}
                 disabled={!canProceed}
-                className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-300 px-3 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg font-bold rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed border border-white/30 flex-shrink-0"
+                className={`backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-300 px-3 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg font-bold rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed border border-white/30 flex-shrink-0 ${
+                  isLastQuestion && hasDeferredQuestions 
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 animate-pulse' 
+                    : 'bg-white/20'
+                }`}
                 size="sm"
               >
-                <span className="hidden sm:inline">التالي</span>
-                <span className="sm:hidden">التالي</span>
-                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">{getNextButtonText()}</span>
+                <span className="sm:hidden">{getNextButtonMobileText()}</span>
+                {isLastQuestion && hasDeferredQuestions ? (
+                  <Flag className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
+                )}
               </Button>
             </div>
           </div>
