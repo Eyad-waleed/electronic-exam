@@ -228,7 +228,7 @@ const ResultsScreen = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-16 space-y-8 sm:px-6 lg:px-8">
         
-        {/* Main Results Card - Modified */}
+        {/* Main Results Card - Simplified and Centered */}
         <Card className="border-0 shadow-2xl bg-white/80 backdrop-blur-sm hover:shadow-3xl transition-all duration-300">
           <CardHeader className="text-center pb-4">
             <div className="flex justify-center mb-4">
@@ -245,22 +245,13 @@ const ResultsScreen = () => {
             <div className={`text-3xl font-semibold ${getGradeTextColor(percentage)} mb-4`}>
               {percentage}%
             </div>
-            <Badge 
-              variant="outline" 
-              className={`text-lg px-4 py-2 bg-gradient-to-r ${getGradeColor(percentage)} text-white border-0 rounded-full shadow-lg`}
-            >
-              {getGradeLabel(percentage)}
-            </Badge>
-            
-            {/* Progress Bar */}
-            <div className="mt-6 max-w-xs mx-auto">
-              <div className="bg-gray-200 rounded-full h-3 overflow-hidden">
-                <div 
-                  className={`h-full bg-gradient-to-r ${getGradeColor(percentage)} transition-all duration-1000 ease-out rounded-full`}
-                  style={{ width: `${percentage}%` }}
-                ></div>
-              </div>
-              <div className="text-sm text-gray-600 mt-1">معدل الإجابات الصحيحة</div>
+            <div className="flex justify-center">
+              <Badge 
+                variant="outline" 
+                className={`text-lg px-4 py-2 bg-gradient-to-r ${getGradeColor(percentage)} text-white border-0 rounded-full shadow-lg`}
+              >
+                {getGradeLabel(percentage)}
+              </Badge>
             </div>
           </CardHeader>
         </Card>
@@ -286,11 +277,6 @@ const ResultsScreen = () => {
             <CardContent className="text-center">
               <div className="text-4xl font-bold text-green-600 mb-2">{examResults.correctAnswers}</div>
               <div className="text-gray-600">من أصل {examResults.totalQuestions} سؤال</div>
-              <div className="mt-4 bg-green-50 rounded-xl p-3">
-                <div className="text-sm text-green-700 font-medium">
-                  معدل النجاح: {((examResults.correctAnswers / examResults.totalQuestions) * 100).toFixed(1)}%
-                </div>
-              </div>
               <div className="mt-2 text-xs text-gray-500">اضغط لعرض الأسئلة</div>
             </CardContent>
           </Card>
@@ -314,11 +300,6 @@ const ResultsScreen = () => {
             <CardContent className="text-center">
               <div className="text-4xl font-bold text-red-600 mb-2">{examResults.incorrectAnswers}</div>
               <div className="text-gray-600">تحتاج إلى مراجعة</div>
-              <div className="mt-4 bg-red-50 rounded-xl p-3">
-                <div className="text-sm text-red-700 font-medium">
-                  معدل الأخطاء: {((examResults.incorrectAnswers / examResults.totalQuestions) * 100).toFixed(1)}%
-                </div>
-              </div>
               <div className="mt-2 text-xs text-gray-500">اضغط لعرض الأسئلة</div>
             </CardContent>
           </Card>
@@ -342,11 +323,6 @@ const ResultsScreen = () => {
             <CardContent className="text-center">
               <div className="text-4xl font-bold text-gray-600 mb-2">{examResults.totalQuestions - examResults.correctAnswers - examResults.incorrectAnswers}</div>
               <div className="text-gray-600">سؤال لم يتم حله</div>
-              <div className="mt-4 bg-gray-50 rounded-xl p-3">
-                <div className="text-sm text-gray-700 font-medium">
-                  معدل عدم الحل: {examResults.totalQuestions > 0 ? (((examResults.totalQuestions - examResults.correctAnswers - examResults.incorrectAnswers) / examResults.totalQuestions) * 100).toFixed(1) : 0}%
-                </div>
-              </div>
               <div className="mt-2 text-xs text-gray-500">اضغط لعرض الأسئلة</div>
             </CardContent>
           </Card>
