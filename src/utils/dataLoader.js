@@ -269,11 +269,16 @@ export const generateExam = (config = {}) => {
   const questionOrder = ['analogy', 'completion', 'error', 'rc', 'odd'];
   
   const sectionStructures = [
-    { analogy: 4, completion: 2, error: 2, rc: 4, odd: 1, rc_max_per_passage: 4 },
-    { analogy: 4, completion: 2, error: 2, rc: 4, odd: 1, rc_max_per_passage: 4 },
-    { analogy: 4, completion: 2, error: 2, rc: 4, odd: 1, rc_max_per_passage: 4 },
-    { analogy: 4, completion: 2, error: 2, rc: 4, odd: 1, rc_max_per_passage: 4 },
-    { analogy: 4, completion: 2, error: 2, rc: 4, odd: 1, rc_max_per_passage: 4 }
+    // Section 1
+    { analogy: 4, completion: 2, error: 2, rc: 5, odd: 0, rc_max_per_passage: 5 },
+    // Section 2
+    { analogy: 4, completion: 2, error: 2, rc: 5, odd: 0, rc_max_per_passage: 5 },
+    // Section 3 (Special)
+    { analogy: 2, completion: 2, error: 2, rc: 5, odd: 2, rc_max_per_passage: 5 },
+    // Section 4
+    { analogy: 4, completion: 2, error: 2, rc: 5, odd: 0, rc_max_per_passage: 5 },
+    // Section 5
+    { analogy: 4, completion: 2, error: 2, rc: 5, odd: 0, rc_max_per_passage: 5 }
   ];
 
   // Create pools for each question type
@@ -388,11 +393,11 @@ export const generateExam = (config = {}) => {
     totalSections: 5,
     questionsPerSection: 13,
     structure: {
-      analogy: 20,
+      analogy: 18,
       completion: 10,
       error: 10,
-      rc: 20,
-      odd: 5
+      rc: 25,
+      odd: 2
     }
   };
 };
