@@ -137,7 +137,7 @@ const StartScreen = () => {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5" />
-              <span>6 أقسام مخصصة</span>
+              <span>5 أقسام مخصصة</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5" />
