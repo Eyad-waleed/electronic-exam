@@ -1,9 +1,9 @@
-import analogyData from '../data/التناظراللفظي.json';
-import completionData from '../data/اكمالالجمل.json';
-import errorData from '../data/الخطأالسياقي.json';
-import rcBank4Data from '../data/استيعابالمقروءالبنكالرابع.json';
-import rcBank5Data from '../data/استيعابالمقروءالبنكالخامس.json';
-import oddData from '../data/المفردةالشاذة.json';
+import analogyData from '../data/analogy.json';
+import completionData from '../data/completion.json';
+import errorData from '../data/error.json';
+import rcBank4Data from '../data/rcbank4.json';
+import rcBank5Data from '../data/rcbank5.json';
+import oddData from '../data/odd.json';
 
 // Normalize question data structure and assign a truly unique ID
 const normalizeQuestion = (question, type, sourceIndex) => {
