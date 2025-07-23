@@ -3,7 +3,7 @@ import { useExamStore } from "../store/examStore";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from './ui/badge';
-import { CheckCircle, XCircle, Clock, ArrowLeft, ArrowRight, BookOpen, BarChart3, Target, Flag, GraduationCap, Award, Home } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, ArrowLeft, ArrowRight, BookOpen, BarChart3, Target, GraduationCap, Award, Home } from 'lucide-react';
 
 const SectionReview = () => {
   const {
@@ -89,69 +89,61 @@ const SectionReview = () => {
     }
   };
 
-  const completionPercentage = Math.round((sectionStats.answered / sectionStats.total) * 100);
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-100" dir="rtl">
       {/* Enhanced Header - Mobile Optimized */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900"></div>
         <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative bg-white/10 backdrop-blur-sm border-b border-white/20">
-          <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-4 sm:mb-6">
-                <div className="bg-white/20 backdrop-blur-sm rounded-full p-3 sm:p-4">
-                  <BookOpen className="h-8 w-8 sm:h-12 sm:w-12 text-white" />
-                </div>
-              </div>
-              <h1 className="text-2xl sm:text-4xl font-bold text-white mb-2 sm:mb-4">
-                مراجعة القسم {currentSection}
-              </h1>
-              <p className="text-base sm:text-xl text-white/90 mb-4 sm:mb-6">
-                راجع إجاباتك قبل الانتقال للقسم التالي
-              </p>
-              
-              {/* Progress Indicator - Mobile Optimized */}
-              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 sm:p-6 max-w-sm mx-auto">
-                <div className="text-white text-base sm:text-lg font-medium mb-1 sm:mb-2">
-                  نسبة الإنجاز: {completionPercentage}%
-                </div>
-                <div className="w-full bg-white/20 rounded-full h-2 sm:h-3">
-                  <div 
-                    className="bg-gradient-to-r from-green-400 to-emerald-400 h-2 sm:h-3 rounded-full transition-all duration-500"
-                    style={{ width: `${completionPercentage}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              {timerActive && (
-                <div className="mt-4 sm:mt-6 bg-red-500/20 backdrop-blur-sm rounded-lg px-4 py-2 sm:px-6 sm:py-3 inline-flex items-center gap-1 sm:gap-2 border border-red-300/30">
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-200" />
-                  <span className="text-red-200 font-semibold text-sm sm:text-lg">
-                    الوقت المتبقي: {formatTime(timeRemaining)}
-                  </span>
-                </div>
-              )}
+        <div className="relative max-w-7xl mx-auto px-6 py-20 text-center">
+          <div className="flex justify-center mb-6">
+            <div className="bg-white/10 backdrop-blur-sm rounded-full p-6">
+              <BookOpen className="h-16 w-16 text-white" />
             </div>
-            <Button 
-              variant="" 
-              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white hover:bg-white/20 bg-white/10 backdrop-blur-sm border border-white/30 px-3 py-2 sm:px-6 sm:py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 text-sm sm:text-base" 
-              onClick={() => window.location.href = '/'}
-            >
-              <Home className="h-4 w-4 sm:h-6 sm:w-6 ml-1 sm:ml-2" />
-              <span className="font-bold hidden sm:inline">الصفحة الرئيسية</span>
-              <span className="font-bold sm:hidden">الرئيسية</span>
-            </Button>
           </div>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+            مراجعة القسم {currentSection}
+          </h1>
+          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+            راجع إجاباتك قبل الانتقال للقسم التالي
+          </p>
+          {/* Progress Indicator */}
+          <div className="backdrop-blur-sm rounded-xl p-4 sm:p-6 max-w-sm mx-auto mb-8">
+            <div className="text-white text-base sm:text-lg font-medium mb-1 sm:mb-2">
+              القسم {currentSection} من {totalSections}
+            </div>
+            <div className="w-full bg-white/20 rounded-full h-2 sm:h-3">
+              <div 
+                className="bg-gradient-to-r from-green-400 to-emerald-400 h-2 sm:h-3 rounded-full transition-all duration-500"
+                style={{ width: `${(currentSection / totalSections) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+
+          {timerActive && (
+            <div className="mt-4 sm:mt-6 bg-red-500/20 backdrop-blur-sm rounded-lg px-4 py-2 sm:px-6 sm:py-3 inline-flex items-center gap-1 sm:gap-2 border border-red-300/30">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-red-200" />
+              <span className="text-red-200 font-semibold text-sm sm:text-lg">
+                الوقت المتبقي: {formatTime(timeRemaining)}
+              </span>
+            </div>
+          )}
+          <Button 
+            variant="" 
+            className="absolute top-6 right-6 text-white hover:bg-white/20 bg-white/10 backdrop-blur-sm border border-white/30 px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105" 
+            onClick={() => window.location.href = '/'}
+          >
+            <Home className="h-6 w-6 ml-2" />
+            <span className="font-bold">الصفحة الرئيسية</span>
+          </Button>
         </div>
       </div>
 
       {/* Main Content - Mobile Optimized */}
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 py-16 space-y-8 sm:px-6 lg:px-8">
         <div className="space-y-6 sm:space-y-8">
           {/* Enhanced Statistics Cards - Mobile Optimized */}
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
               <CardContent className="p-4 sm:p-6 text-center">
                 <div className="flex items-center justify-center mb-2 sm:mb-4">
@@ -185,18 +177,6 @@ const SectionReview = () => {
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-red-600 mb-1 sm:mb-2">{sectionStats.unanswered}</div>
                 <div className="text-xs sm:text-sm text-gray-600 font-medium">غير مُجابة</div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
-              <CardContent className="p-4 sm:p-6 text-center">
-                <div className="flex items-center justify-center mb-2 sm:mb-4">
-                  <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-full p-2 sm:p-3">
-                    <Flag className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                  </div>
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-amber-600 mb-1 sm:mb-2">{sectionStats.deferred}</div>
-                <div className="text-xs sm:text-sm text-gray-600 font-medium">مؤجلة</div>
               </CardContent>
             </Card>
           </div>
@@ -313,26 +293,12 @@ const SectionReview = () => {
                 }
                 window.scrollTo({ top: 0, behavior: 'smooth' }); 
               }}
-              className="bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white/90 transition-all duration-300 px-4 py-2 sm:px-8 sm:py-4 text-sm sm:text-lg font-bold rounded-lg shadow-lg hover:shadow-xl border-2 border-gray-300 hover:border-gray-400 transform hover:scale-105 w-full sm:w-auto"
+              className="bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white/90 transition-all duration-300 px-4 py-2 sm:px-8 sm:py-4 text-sm sm:text-lg font-bold rounded-lg shadow-lg hover:shadow-xl border-2 border-gray-300 transform hover:scale-105 w-full sm:w-auto"
               size="sm"
             >
               <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 ml-1 sm:ml-2" />
               العودة للقسم {currentSection}
             </Button>
-            
-            <div className="text-center w-full sm:w-auto">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl px-4 py-2 sm:px-6 sm:py-2 border-2 border-blue-300 shadow-lg">
-                <div className="text-blue-700 text-xs sm:text-sm font-medium">
-                  القسم {currentSection} من {totalSections}
-                </div>
-                <div className="w-24 sm:w-32 bg-blue-200 rounded-full h-1.5 sm:h-2 mt-1 mx-auto">
-                  <div 
-                    className="bg-gradient-to-r from-blue-500 to-indigo-500 h-1.5 sm:h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(currentSection / totalSections) * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-            </div>
             
             <Button
               onClick={handleNextSection}

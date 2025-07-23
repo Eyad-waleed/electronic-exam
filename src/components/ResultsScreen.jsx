@@ -22,7 +22,7 @@ const ResultsScreen = () => {
 
   if (!examResults) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 flex items-center justify-center" dir="rtl">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-100 p-4 flex items-center justify-center" dir="rtl">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/20">
           <div className="text-center">
             <div className="bg-blue-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
@@ -198,7 +198,7 @@ const ResultsScreen = () => {
   const GradeIcon = getGradeIcon(percentage);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-100" dir="rtl">
       {/* Hero Header */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900"></div>
@@ -559,7 +559,7 @@ const ResultsScreen = () => {
         <div className="flex justify-center gap-4 pt-8">
           <Button
             onClick={() => window.location.href = '/'}
-            className="bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white/90 transition-all duration-300 px-8 py-4 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl border-2 border-gray-300 hover:border-purple-400 transform hover:scale-105"
+            className="bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-white/90 transition-all duration-300 px-8 py-4 text-lg font-bold rounded-xl shadow-lg hover:shadow-xl border-2 transform hover:scale-105"
             size="lg"
           >
             <Home className="h-6 w-6 ml-2" />
