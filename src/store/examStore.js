@@ -23,6 +23,9 @@ export const useExamStore = create(
       currentQuestionIndex: 0,
       currentSection: 1, // Start from 1 instead of 0
       sectionReviewMode: false, // New: for section review
+      hasSeenSectionReview: false, // Track if user has seen section review page
+      returnedFromSectionReview: false, // Track if user returned from section review
+      reviewedSection: null, // Track which section was reviewed
       
       // Questions and answers
       examQuestions: [],
@@ -331,10 +334,14 @@ export const useExamStore = create(
         if (nextIndex < examQuestions.length) {
           const nextQuestion = examQuestions[nextIndex];
           const nextSection = nextQuestion.section;
+          const currentSection = get().currentSection;
           
           set({
             currentQuestionIndex: nextIndex,
-            currentSection: nextSection
+            currentSection: nextSection,
+            // Reset returnedFromSectionReview and hasSeenSectionReview when moving to a new section
+            returnedFromSectionReview: nextSection !== currentSection ? false : get().returnedFromSectionReview,
+            hasSeenSectionReview: nextSection !== currentSection ? false : get().hasSeenSectionReview
           });
         } else {
           // End of exam
@@ -359,15 +366,41 @@ export const useExamStore = create(
 
       // Jump to specific question
       goToQuestion: (questionIndex) => {
-        const { examQuestions } = get();
+        const { examQuestions, sectionReviewMode } = get();
         
         if (questionIndex >= 0 && questionIndex < examQuestions.length) {
           const question = examQuestions[questionIndex];
           set({
             currentQuestionIndex: questionIndex,
             currentSection: question.section,
-            reviewMode: false
+            reviewMode: false,
+            sectionReviewMode: false,
+            // If coming from section review, mark as returned
+            returnedFromSectionReview: sectionReviewMode ? true : get().returnedFromSectionReview
           });
+        }
+      },
+
+      // New action: Move to next section from review
+      moveToNextSectionFromReview: () => {
+        const { currentSection, examQuestions } = get();
+        const nextSection = currentSection + 1;
+        const nextSectionFirstQuestion = examQuestions.find(q => q.section === nextSection);
+
+        if (nextSectionFirstQuestion) {
+          const questionIndex = examQuestions.findIndex(q => q.question_number === nextSectionFirstQuestion.question_number);
+          if (questionIndex !== -1) {
+            set({
+              currentQuestionIndex: questionIndex,
+              currentSection: nextSection,
+              sectionReviewMode: false,
+              returnedFromSectionReview: false,
+              reviewMode: false, // Ensure review mode is off
+            });
+          }
+        } else {
+          // If no next section, it means it's the last section, complete the exam
+          get().completeExam();
         }
       },
 
@@ -487,10 +520,26 @@ export const useExamStore = create(
         const { currentSection, examQuestions } = get();
         const nextQuestionIndex = currentSection * 13; // Assuming 13 questions per section
         
+        // If moving to next section, reset hasSeenSectionReview
+        const isMovingToNextSection = nextQuestionIndex < examQuestions.length;
+        
         set({
           sectionReviewMode: false,
+          returnedFromSectionReview: true, // Mark that user returned from section review
           currentQuestionIndex: nextQuestionIndex < examQuestions.length ? nextQuestionIndex : examQuestions.length - 1,
-          currentSection: nextQuestionIndex < examQuestions.length ? currentSection + 1 : currentSection
+          currentSection: nextQuestionIndex < examQuestions.length ? currentSection + 1 : currentSection,
+          // Reset hasSeenSectionReview if moving to next section
+          hasSeenSectionReview: isMovingToNextSection ? false : get().hasSeenSectionReview
+        });
+      },
+
+      // Go to section review
+      goToSectionReview: () => {
+        const { currentSection } = get();
+        set({
+          sectionReviewMode: true,
+          hasSeenSectionReview: true,
+          reviewedSection: currentSection // Track which section is being reviewed
         });
       },
 
