@@ -79,7 +79,7 @@ const ReviewScreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-100" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100" dir="rtl">
       {/* Header - Mobile Optimized */}
       <div className="bg-blue-900 text-white px-4 py-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">

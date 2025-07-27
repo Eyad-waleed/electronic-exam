@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, ChevronLeft, Clock, Flag, Filter, BarChart3, BookOpen, GraduationCap, Target, CheckCircle, Home, X, ZoomIn } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Clock, Flag, Filter, BarChart3, BookOpen, GraduationCap, Target, CheckCircle, Home, X, ZoomIn, RotateCcw } from 'lucide-react';
 import { useExamStore } from '../store/examStore';
 
 const QuestionDisplay = () => {
@@ -21,14 +21,212 @@ const QuestionDisplay = () => {
     reviewMode,
     timerActive,
     timeRemaining,
+    sectionReviewMode,
+    hasSeenSectionReview,
+    returnedFromSectionReview,
+    reviewedSection,
     selectAnswer,
     toggleDeferred,
     nextQuestion,
     previousQuestion,
     getQuestionStats,
     getCurrentExamInfo,
-    goToQuestion // Assuming this function exists in the store
+    goToQuestion,
+    setReviewMode,
+    goToSectionReview
   } = useExamStore();
+
+  // Add keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Only handle keyboard events if we're not in an input field
+      if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      // Check if we should show deferred questions button
+      const currentQuestionNumber = currentQuestionIndex + 1;
+      const isLastQuestionInSection = currentQuestionNumber % 13 === 0;
+      
+      let shouldShowDeferredButton = false;
+      
+      if (examMode === 'combined') {
+        // For combined sectioned exam, only show deferred button at the end of entire exam
+        shouldShowDeferredButton = isLastQuestion && hasDeferredQuestionsInCurrentSection();
+      } else {
+        // For regular sectioned exam
+        shouldShowDeferredButton = 
+          (isLastQuestionInSection && !isLastQuestion && examMode === 'sectioned' && hasDeferredQuestionsInCurrentSection()) ||
+          (isLastQuestion && hasDeferredQuestionsInCurrentSection());
+      }
+
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault();
+          // Disable keyboard navigation for next button when deferred questions button should be shown
+          if (canProceed && !shouldShowDeferredButton) {
+            handleNext();
+          }
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          if (canGoPrevious()) {
+            handlePrevious();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup function to remove event listener
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [currentQuestionIndex, examQuestions, deferredQuestions, examMode, currentSection]); // Dependencies to ensure the effect updates when these change
+
+    // Function to calculate the display question number based on exam mode
+  const getDisplayQuestionNumber = () => {
+    if (examMode === 'sectioned') {
+      // For sectioned mode: show 1-13 for each section
+      const questionInSection = (currentQuestionIndex % 13) + 1;
+      return questionInSection;
+    } else {
+      // For single section mode: show 1-65
+      return currentQuestionIndex + 1;
+    }
+  };
+
+  // Function to calculate total questions for display
+  const getTotalQuestionsDisplay = () => {
+    if (examMode === 'sectioned') {
+      // For sectioned mode: show 13 as total for each section
+      return 13;
+    } else {
+      // For single section mode: show total number of questions (65)
+      return examQuestions.length;
+    }
+  };
+
+  // Function to highlight choice words in red for contextual error questions
+  const highlightChoiceWords = (questionText, choices, questionType) => {
+    if (questionType !== 'error' || !choices || !questionText) {
+      return questionText;
+    }
+
+    let highlightedText = questionText;
+    
+    // Sort choices by length (longest first) to avoid partial matches
+    const sortedChoices = [...choices].sort((a, b) => b.length - a.length);
+    
+    // Function to remove diacritics (tashkeel) from Arabic text
+    const removeDiacritics = (text) => {
+      return text.replace(/[\u064B-\u0652\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g, "");
+    };
+    
+    // Function to normalize hamza variations
+    const normalizeHamza = (text) => {
+      return text
+        .replace(/[أإآ]/g, 'ا') // Normalize alif with hamza
+        .replace(/[ؤ]/g, 'و')   // Normalize waw with hamza
+        .replace(/[ئ]/g, 'ي');  // Normalize yaa with hamza
+    };
+
+    // Function to get the core word by removing common prefixes and suffixes
+    const getCoreWord = (word) => {
+      // First, remove punctuation from the word
+      let cleanedWord = word.replace(/[،,\.؛;:!؟?]/g, '');
+      
+      let core = normalizeHamza(removeDiacritics(cleanedWord));
+      
+      // Handle compound prefixes more carefully
+      // First remove 'و' if it's at the beginning
+      core = core.replace(/^و/, '');
+      
+      // Then handle 'ب' + 'ال' combination (بال)
+      if (core.startsWith('بال')) {
+        core = core.substring(3); // Remove 'بال'
+      }
+      // Handle 'ل' + 'ال' combination (لال)
+      else if (core.startsWith('لال')) {
+        core = core.substring(3); // Remove 'لال'
+      }
+      // Handle 'ب' + other combinations
+      else if (core.startsWith('ب')) {
+        core = core.substring(1); // Remove 'ب'
+        // If what remains starts with 'ال', remove it too
+        if (core.startsWith('ال')) {
+          core = core.substring(2);
+        }
+      }
+      // Handle 'ل' + other combinations
+      else if (core.startsWith('ل')) {
+        core = core.substring(1); // Remove 'ل'
+        // If what remains starts with 'ال', remove it too
+        if (core.startsWith('ال')) {
+          core = core.substring(2);
+        }
+      }
+      // Handle standalone 'ال'
+      else if (core.startsWith('ال')) {
+        core = core.substring(2); // Remove 'ال'
+      }
+      
+      // Remove other common prefixes
+      core = core.replace(/^(ف|ك|س)/, '');
+      
+      // Remove common suffixes (including the problematic 'ا' vs 'و' endings)
+      // First handle the specific case of 'وا' vs 'و' endings
+      if (core.endsWith('وا')) {
+        core = core.slice(0, -2) + 'و'; // Replace 'وا' with 'و'
+      }
+      
+      // Then handle other common suffixes
+      core = core.replace(/(ه|ها|هم|هن|ك|كم|كن|ي|نا|ون|ين|ات)$/, '');
+      
+      return core;
+    };
+    
+    sortedChoices.forEach(choice => {
+      if (choice && choice.trim()) {
+        const trimmedChoice = choice.trim();
+        
+        // Extract individual words from the choice, ignoring punctuation and parentheses
+        // This regex splits on spaces, parentheses, brackets, commas, periods, semicolons, colons
+        const wordsInChoice = trimmedChoice.split(/[\s\(\)\[\]،,\.؛;:]+/).filter(word => word.length > 0);
+        
+        // For each word in the choice, find and highlight it in the question
+        wordsInChoice.forEach(wordInChoice => {
+          const coreWordInChoice = getCoreWord(wordInChoice);
+          
+          // Split the question into words and check each word
+          const wordsInQuestion = questionText.split(/\s+/);
+          
+          wordsInQuestion.forEach(wordInQuestion => {
+            const coreWordInQuestion = getCoreWord(wordInQuestion);
+            
+            // If the core words match, highlight the original word in the question
+            if (coreWordInQuestion === coreWordInChoice && coreWordInChoice.length > 0) {
+              // Make sure we haven't already highlighted this word
+              if (!highlightedText.includes(`<span style="color: red; font-weight: bold;">${wordInQuestion}</span>`)) {
+                highlightedText = highlightedText.replace(wordInQuestion, `<span style="color: red; font-weight: bold;">${wordInQuestion}</span>`);
+              }
+            }
+          });
+        });
+      }
+    });
+
+    return highlightedText;
+  };
+
+  // Function to render highlighted text
+  const renderHighlightedText = (text) => {
+    return <div dangerouslySetInnerHTML={{ __html: text }} />;
+  };
 
   if (!examQuestions || examQuestions.length === 0) {
     return (
@@ -51,16 +249,56 @@ const QuestionDisplay = () => {
   const isFirstQuestion = currentQuestionIndex === 0;
   const examInfo = getCurrentExamInfo();
 
+  // Check if we can go to previous question (not first question and not first question of current section)
+  const canGoPrevious = () => {
+    if (isFirstQuestion) return false;
+    
+    // Allow going back if examMode is not 'sectioned' (i.e., combined test)
+    if (examMode !== 'sectioned') {
+      return true;
+    }
+
+    const currentQuestionNumber = currentQuestionIndex + 1;
+    const isFirstQuestionInSection = (currentQuestionNumber - 1) % 13 === 0;
+    
+    // If we're at the first question of a section and it's not the very first question, prevent going back
+    if (isFirstQuestionInSection && currentQuestionIndex > 0) {
+      return false;
+    }
+    
+    return true;
+  };
+
   // Allow navigation for all question types - removed answer requirement
   const canProceed = true;
 
   // Check if there are any deferred questions in the current section
-  const hasDeferredQuestionsInCurrentSection = examQuestions
-    .filter(q => q.section === currentSection)
-    .some(q => deferredQuestions[q.question_number]);
+  const hasDeferredQuestionsInCurrentSection = () => {
+    const isLastQuestion = currentQuestionIndex === examQuestions.length - 1;
+
+    if (isLastQuestion) {
+        return examQuestions.some(q => deferredQuestions[q.question_number]);
+    }
+    // Original logic
+    return examQuestions
+      .filter(q => q.section === currentSection)
+      .some(q => deferredQuestions[q.question_number]);
+  };
   
   // Find the first deferred question index in the current section
   const getFirstDeferredQuestionIndexInCurrentSection = () => {
+    const isLastQuestion = currentQuestionIndex === examQuestions.length - 1;
+
+    if (isLastQuestion) {
+        for (let i = 0; i < examQuestions.length; i++) {
+            const question = examQuestions[i];
+            if (deferredQuestions[question.question_number]) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    // Original logic
     for (let i = 0; i < examQuestions.length; i++) {
       const question = examQuestions[i];
       if (question.section === currentSection && deferredQuestions[question.question_number]) {
@@ -83,42 +321,72 @@ const QuestionDisplay = () => {
     const currentQuestionNumber = currentQuestionIndex + 1;
     const isLastQuestionInSection = currentQuestionNumber % 13 === 0;
     
-    // If it's the end of a section in a sectioned exam and there are deferred questions in the current section
-    if (isLastQuestionInSection && !isLastQuestion && examMode === 'sectioned' && hasDeferredQuestionsInCurrentSection) {
-      const firstDeferredIndex = getFirstDeferredQuestionIndexInCurrentSection();
-      if (firstDeferredIndex !== -1) {
-        // If goToQuestion function exists, use it; otherwise use a fallback
-        if (typeof goToQuestion === 'function') {
-          goToQuestion(firstDeferredIndex);
-        } else {
-          // Fallback: you might need to implement this based on your store structure
-          // This is a placeholder - adjust according to your actual store implementation
-          console.log('Navigate to deferred question at index:', firstDeferredIndex);
-        }
-        return;
-      }
-    }
-    
-    // If it's the last question and there are deferred questions in the current section, go to first deferred question in current section
-    if (isLastQuestion && hasDeferredQuestionsInCurrentSection) {
-      const firstDeferredIndex = getFirstDeferredQuestionIndexInCurrentSection();
-      if (firstDeferredIndex !== -1) {
-        // If goToQuestion function exists, use it; otherwise use a fallback
-        if (typeof goToQuestion === 'function') {
-          goToQuestion(firstDeferredIndex);
-        } else {
-          // Fallback: you might need to implement this based on your store structure
-          // This is a placeholder - adjust according to your actual store implementation
-          console.log('Navigate to deferred question at index:', firstDeferredIndex);
+    // For combined sectioned exam, only check at the end of the entire exam
+    if (examMode === 'combined') {
+      // If it's the last question and there are deferred questions, go to first deferred question
+      if (isLastQuestion && hasDeferredQuestionsInCurrentSection()) {
+        const firstDeferredIndex = getFirstDeferredQuestionIndexInCurrentSection();
+        if (firstDeferredIndex !== -1) {
+          if (typeof goToQuestion === 'function') {
+            goToQuestion(firstDeferredIndex);
+          } else {
+            console.log('Navigate to deferred question at index:', firstDeferredIndex);
+          }
+          return;
         }
       }
     } else {
-      nextQuestion();
+      // For regular sectioned exam
+      // If it's the end of a section in a sectioned exam and there are deferred questions in the current section
+      if (isLastQuestionInSection && !isLastQuestion && examMode === 'sectioned' && hasDeferredQuestionsInCurrentSection()) {
+        const firstDeferredIndex = getFirstDeferredQuestionIndexInCurrentSection();
+        if (firstDeferredIndex !== -1) {
+          if (typeof goToQuestion === 'function') {
+            goToQuestion(firstDeferredIndex);
+          } else {
+            console.log('Navigate to deferred question at index:', firstDeferredIndex);
+          }
+          return;
+        }
+      }
+      
+      // If it's the last question and there are deferred questions in the current section, go to first deferred question in current section
+      if (isLastQuestion && hasDeferredQuestionsInCurrentSection()) {
+        const firstDeferredIndex = getFirstDeferredQuestionIndexInCurrentSection();
+        if (firstDeferredIndex !== -1) {
+          if (typeof goToQuestion === 'function') {
+            goToQuestion(firstDeferredIndex);
+          } else {
+            console.log('Navigate to deferred question at index:', firstDeferredIndex);
+          }
+          return;
+        }
+      }
     }
+    
+    nextQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePrevious = () => {
+    // Allow going back if examMode is not 'sectioned' (i.e., combined test)
+    if (examMode !== 'sectioned') {
+      previousQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Check if we're at the first question of the current section
+    const currentQuestionNumber = currentQuestionIndex + 1;
+    const isFirstQuestionInSection = (currentQuestionNumber - 1) % 13 === 0;
+    
+    // If we're at the first question of a section and it's not the very first question, prevent going back
+    if (isFirstQuestionInSection && currentQuestionIndex > 0) {
+      return; // Don't allow going back to previous section
+    }
+    
     previousQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleTextEnlarge = () => {
@@ -135,6 +403,18 @@ const QuestionDisplay = () => {
 
   const handleCloseInstructionModal = () => {
     setIsInstructionModalOpen(false);
+  };
+
+  // Function to handle section review button
+  const handleSectionReview = () => {
+    // Navigate to section review page using the store function
+    console.log("Navigating to section review page for section:", currentSection);
+    goToSectionReview();
+  };
+
+  // Function to check if section review button should be shown
+  const shouldShowSectionReviewButton = () => {
+    return examMode === 'sectioned' && returnedFromSectionReview;
   };
 
   const formatTime = (seconds) => {
@@ -172,13 +452,21 @@ const QuestionDisplay = () => {
     const currentQuestionNumber = currentQuestionIndex + 1;
     const isLastQuestionInSection = currentQuestionNumber % 13 === 0;
     
-    // Check for deferred questions at section end for sectioned exams
-    if (isLastQuestionInSection && !isLastQuestion && examMode === 'sectioned' && hasDeferredQuestionsInCurrentSection) {
-      return 'لديك أسئلة مؤجلة';
-    }
-    
-    if (isLastQuestion && hasDeferredQuestionsInCurrentSection) {
-      return 'لديك أسئلة مؤجلة';
+    // For combined sectioned exam, only show deferred button at the end of entire exam
+    if (examMode === 'combined') {
+      if (isLastQuestion && hasDeferredQuestionsInCurrentSection()) {
+        return 'لديك أسئلة مؤجلة';
+      }
+    } else {
+      // For regular sectioned exam
+      // Check for deferred questions at section end for sectioned exams
+      if (isLastQuestionInSection && !isLastQuestion && examMode === 'sectioned' && hasDeferredQuestionsInCurrentSection()) {
+        return 'لديك أسئلة مؤجلة';
+      }
+      
+      if (isLastQuestion && hasDeferredQuestionsInCurrentSection()) {
+        return 'لديك أسئلة مؤجلة';
+      }
     }
     
     if (isLastQuestion) {
@@ -195,13 +483,21 @@ const QuestionDisplay = () => {
     const currentQuestionNumber = currentQuestionIndex + 1;
     const isLastQuestionInSection = currentQuestionNumber % 13 === 0;
     
-    // Check for deferred questions at section end for sectioned exams
-    if (isLastQuestionInSection && !isLastQuestion && examMode === 'sectioned' && hasDeferredQuestionsInCurrentSection) {
-      return 'أسئلة مؤجلة';
-    }
-    
-    if (isLastQuestion && hasDeferredQuestionsInCurrentSection) {
-      return 'أسئلة مؤجلة';
+    // For combined sectioned exam, only show deferred button at the end of entire exam
+    if (examMode === 'combined') {
+      if (isLastQuestion && hasDeferredQuestionsInCurrentSection()) {
+        return 'أسئلة مؤجلة';
+      }
+    } else {
+      // For regular sectioned exam
+      // Check for deferred questions at section end for sectioned exams
+      if (isLastQuestionInSection && !isLastQuestion && examMode === 'sectioned' && hasDeferredQuestionsInCurrentSection()) {
+        return 'أسئلة مؤجلة';
+      }
+      
+      if (isLastQuestion && hasDeferredQuestionsInCurrentSection()) {
+        return 'أسئلة مؤجلة';
+      }
     }
     
     if (isLastQuestion) {
@@ -216,42 +512,57 @@ const QuestionDisplay = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-100 pb-24 sm:pb-20" dir="rtl">
-      {/* Enhanced Header - Mobile Optimized */}
+      {/* Enhanced Header - Consistent Size Across All Devices */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900"></div>
         <div className="">
-          <div className="mx-auto px-3 sm:px-6 py-3 sm:py-4">
-            <div className="flex justify-between items-center flex-wrap gap-2">
-              <div className="flex items-center gap-2 sm:gap-4">
-                <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl px-2 sm:px-4 py-1 sm:py-2 border border-white/30">
-                  <div className="text-white font-bold text-sm sm:text-lg">
-                    السؤال {currentQuestionIndex + 1} من {examQuestions.length}
+          <div className="mx-auto px-4 py-4">
+            <div className="flex justify-between items-center flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
+                  <div className="text-white font-bold text-base">
+                    السؤال {getDisplayQuestionNumber()} من {getTotalQuestionsDisplay()}
+                  </div>
+                </div>
+                {/* Progress Indicator - Hidden on mobile */}
+                <div className="hidden md:flex bg-white/20 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/30">
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 bg-white/30 rounded-full h-2">
+                      <div 
+                        className="rounded-full h-2 transition-all duration-300"
+                        style={{ 
+                          width: `${(getDisplayQuestionNumber() / getTotalQuestionsDisplay()) * 100}%`,
+                          background: 'linear-gradient(to right, #10B981 0%, #06D6A0 50%, #00F5FF 100%)'
+                        }}
+                      ></div>
+                    </div>
+                    <span className="text-white text-sm font-medium">
+                      {Math.round((getDisplayQuestionNumber() / getTotalQuestionsDisplay()) * 100)}%
+                    </span>
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-                {examInfo.type === 'all' && (
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl px-2 sm:px-4 py-1 sm:py-2 border border-white/30 hidden md:block">
-                    <div className="text-white font-medium text-sm sm:text-base">القسم {currentSection}</div>
+              <div className="flex items-center gap-3 flex-wrap">
+                {examMode === 'sectioned' && (
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30 hidden sm:block">
+                    <div className="text-white font-medium text-base">القسم {currentSection}</div>
                   </div>
                 )}
                 {timerActive && (
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl px-3 sm:px-4 py-2 sm:py-2 border border-white/30">
-                    <div className={`font-bold text-base sm:text-lg flex items-center gap-2 ${timeRemaining < 300 ? 'text-red-300 animate-pulse' : 'text-white'}`}>
-                      <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
-                      <span className="text-lg sm:text-xl font-extrabold tracking-wide">{formatTime(timeRemaining)}</span>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
+                    <div className={`font-bold text-base flex items-center gap-2 ${timeRemaining < 300 ? 'text-red-300 animate-pulse' : 'text-white'}`}>
+                      <Clock className="h-5 w-5" />
+                      <span className="text-lg font-extrabold tracking-wide">{formatTime(timeRemaining)}</span>
                     </div>
                   </div>
                 )}
                 <Button 
                   variant="" 
-                  className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-300 px-3 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg font-bold rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed border border-white/30 flex-shrink-0" 
+                  className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-300 px-4 py-2 text-base font-bold rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed border border-white/30 flex-shrink-0" 
                   onClick={() => window.location.href = '/'}
                 >
-                  <Home className="h-4 w-4 sm:h-6 sm:w-6 ml-1 sm:ml-2" />
-                  <span className="font-bold hidden sm:inline">الصفحة الرئيسية</span>
-                  <span className="font-bold sm:hidden">الرئيسية</span>
+                  <Home className="h-5 w-5" />
                 </Button>
               </div>
             </div>
@@ -369,9 +680,12 @@ const QuestionDisplay = () => {
                   </Card>
                 )}
 
-                {/* Question text - Mobile Optimized */}
+                {/* Question text - Mobile Optimized with highlighting for error questions */}
                 <div className="text-base sm:text-lg font-medium leading-relaxed mb-3 sm:mb-6 lg:mb-3 xl:mb-3 text-gray-900 text-center break-words overflow-wrap-anywhere">
-                  {currentQuestion.question}
+                  {currentQuestion.type === 'error' ? 
+                    renderHighlightedText(highlightChoiceWords(currentQuestion.question, currentQuestion.choices, currentQuestion.type)) :
+                    currentQuestion.question
+                  }
                 </div>
 
                 {/* Answer choices - Mobile Optimized with proper bottom spacing */}
@@ -397,7 +711,7 @@ const QuestionDisplay = () => {
                           className="flex-shrink-0 border-2 border-blue-300 w-4 h-4 sm:w-5 sm:h-5 pointer-events-none"
                         />
                         <Label 
-                          htmlFor={`choice-${index}`} 
+                          htmlFor={`choice-${index}`}
                           className="flex-1 cursor-pointer text-base sm:text-lg leading-relaxed text-right text-gray-800 font-medium pointer-events-none break-words overflow-wrap-anywhere"
                         >
                           {choice}
@@ -480,7 +794,7 @@ const QuestionDisplay = () => {
               {/* Previous Button - Mobile Optimized */}
               <Button
                 onClick={handlePrevious}
-                disabled={isFirstQuestion}
+                disabled={!canGoPrevious()}
                 className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-300 px-3 sm:px-8 py-2 sm:py-3 text-sm sm:text-lg font-bold rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed border border-white/30 flex-shrink-0"
                 size="sm"
               >
@@ -489,20 +803,21 @@ const QuestionDisplay = () => {
                 <span className="sm:hidden">السابق</span>
               </Button>
 
-              {/* Progress - Mobile Optimized */}
-              <div className="text-center flex-1 max-w-xs sm:max-w-none">
-                <div className="">
-                  <div className="text-white text-xs sm:text-sm font-medium">
-                    التقدم: {Math.round(((currentQuestionIndex + 1) / examQuestions.length) * 100)}%
-                  </div>
-                  <div className="w-20 sm:w-32 bg-white/20 rounded-full h-1.5 sm:h-2 mt-1 mx-auto">
-                    <div 
-                      className="bg-gradient-to-r from-green-400 to-emerald-400 h-1.5 sm:h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${((currentQuestionIndex + 1) / examQuestions.length) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
+              {/* Section Review Button - Only show when conditions are met */}
+              {shouldShowSectionReviewButton() && (
+                <Button
+                  onClick={handleSectionReview}
+                  className="bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-all duration-300 px-3 sm:px-6 py-2 sm:py-3 text-sm sm:text-lg font-bold rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl border border-white/30 flex-shrink-0"
+                  size="sm"
+                >
+                  <RotateCcw className="h-4 w-4 sm:h-5 sm:w-5 ml-1 sm:ml-2" />
+                  <span className="hidden sm:inline">مراجعة القسم</span>
+                  <span className="sm:hidden">مراجعة</span>
+                </Button>
+              )}
+
+              {/* Spacer to push next button to the right */}
+              <div className="flex-1"></div>
 
               {/* Next Button - Mobile Optimized with conditional text and styling */}
               <Button
