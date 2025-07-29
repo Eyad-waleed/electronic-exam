@@ -205,11 +205,11 @@ const SectionReview = () => {
             <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
               <CardContent className="p-4 sm:p-6 text-center">
                 <div className="flex items-center justify-center mb-2 sm:mb-4">
-                  <div className="bg-gradient-to-r from-red-500 to-pink-500 rounded-full p-2 sm:p-3">
+                  <div className="bg-gradient-to-r from-gray-500 to-slate-500 rounded-full p-2 sm:p-3">
                     <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                   </div>
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-red-600 mb-1 sm:mb-2">{sectionStats.unanswered}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-gray-600 mb-1 sm:mb-2">{sectionStats.unanswered}</div>
                 <div className="text-xs sm:text-sm text-gray-600 font-medium">غير مُجابة</div>
               </CardContent>
             </Card>
@@ -241,7 +241,7 @@ const SectionReview = () => {
                           ? 'border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100' 
                           : isDeferred
                           ? 'border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100'
-                          : 'border-red-300 bg-gradient-to-br from-red-50 to-pink-50 hover:from-red-100 hover:to-pink-100'
+                          : 'border-gray-300 bg-gradient-to-br from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100'
                       }`}
                       onClick={() => handleQuestionClick(question.question_number)}
                     >
@@ -256,7 +256,7 @@ const SectionReview = () => {
                             <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                           </div>
                         ) : (
-                          <div className="bg-red-500 rounded-full p-1 sm:p-2">
+                          <div className="bg-gray-500 rounded-full p-1 sm:p-2">
                             <XCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                           </div>
                         )}
@@ -281,7 +281,7 @@ const SectionReview = () => {
                               ? 'border-green-300 text-green-700 bg-green-100' 
                               : isDeferred
                               ? 'border-amber-300 text-amber-700 bg-amber-100'
-                              : 'border-red-300 text-red-700 bg-red-100'
+                              : 'border-gray-300 text-gray-700 bg-gray-100'
                           }`}
                         >
                           {getQuestionTypeLabel(question.type)}
@@ -300,7 +300,7 @@ const SectionReview = () => {
                             ? 'bg-green-200 text-green-800' 
                             : isDeferred
                             ? 'bg-amber-200 text-amber-800'
-                            : 'bg-red-200 text-red-800'
+                            : 'bg-gray-200 text-gray-800'
                         }`}>
                           {isAnswered ? 'مُجابة' : isDeferred ? 'مؤجلة' : 'غير مُجابة'}
                         </span>
