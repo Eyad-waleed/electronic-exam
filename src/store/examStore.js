@@ -26,6 +26,7 @@ export const useExamStore = create(
       hasSeenSectionReview: false, // Track if user has seen section review page
       returnedFromSectionReview: false, // Track if user returned from section review
       reviewedSection: null, // Track which section was reviewed
+      hideDeferButton: false, // New: to hide defer button when section ends
       
       // Questions and answers
       examQuestions: [],
@@ -156,6 +157,7 @@ export const useExamStore = create(
             currentQuestionIndex: 0,
             currentSection: 1,
             sectionReviewMode: false,
+            hideDeferButton: false,
             userAnswers: {},
             deferredQuestions: {},
             timerActive: config.timerMode !== 'none',
@@ -182,6 +184,7 @@ export const useExamStore = create(
             currentQuestionIndex: 0,
             currentSection: 1,
             sectionReviewMode: false,
+            hideDeferButton: false,
             examQuestions: [],
             userAnswers: {},
             deferredQuestions: {},
@@ -395,7 +398,8 @@ export const useExamStore = create(
               currentSection: nextSection,
               sectionReviewMode: false,
               returnedFromSectionReview: false,
-              reviewMode: false, // Ensure review mode is off
+              hasSeenSectionReview: false, // <-- FIX: Reset this state for the new section
+              reviewMode: false,
             });
           }
         } else {
@@ -481,6 +485,7 @@ export const useExamStore = create(
           currentQuestionIndex: 0,
           currentSection: 1,
           sectionReviewMode: false,
+          hideDeferButton: false,
           examQuestions: [],
           userAnswers: {},
           deferredQuestions: {},
@@ -568,4 +573,3 @@ export const useExamStore = create(
     }
   )
 );
-
