@@ -25,6 +25,7 @@ const QuestionDisplay = () => {
     hasSeenSectionReview,
     returnedFromSectionReview,
     reviewedSection,
+    hideDeferButton,
     selectAnswer,
     toggleDeferred,
     nextQuestion,
@@ -414,7 +415,13 @@ const QuestionDisplay = () => {
 
   // Function to check if section review button should be shown
   const shouldShowSectionReviewButton = () => {
-    return examMode === 'sectioned' && returnedFromSectionReview;
+    // Show the button if:
+    // 1. It's a sectioned exam AND we returned from section review
+    // 2. OR if it's a sectioned exam AND there are deferred questions in current section AND we've seen section review
+    return examMode === 'sectioned' && (
+      returnedFromSectionReview || 
+      (hasDeferredQuestionsInCurrentSection() && hasSeenSectionReview)
+    );
   };
 
   const formatTime = (seconds) => {
@@ -761,25 +768,28 @@ const QuestionDisplay = () => {
                 </Card>
               </div>
               {/* Defer Button - Mobile Optimized with proper spacing to avoid footer overlap */}
-              <div className="mt-3 sm:mt-4 mb-6 sm:mb-8 text-center">
-                <Button
-                  onClick={handleDeferToggle}
-                  disabled={selectedAnswer !== undefined}
-                  className={`w-full transition-all duration-300 rounded-lg sm:rounded-xl h-10 sm:h-12 font-bold text-xs sm:text-sm lg:text-xs xl:text-sm min-w-0 ${
-                    selectedAnswer !== undefined
-                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
-                      : isDeferred 
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600' 
-                        : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600'
-                  } shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none disabled:hover:shadow-lg`}
-                  size="lg"
-                >
-                  <Flag className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 flex-shrink-0" />
-                  <span className="truncate">
-                    {selectedAnswer !== undefined ? 'لا يمكن التأجيل بعد الإجابة' : (isDeferred ? 'إلغاء التأجيل' : 'تأجيل السؤال')}
-                  </span>
-                </Button>
-              </div>
+              {/* Hide defer button when hideDeferButton is true OR when returned from section review */}
+              {!hideDeferButton && !returnedFromSectionReview && (
+                <div className="mt-3 sm:mt-4 mb-6 sm:mb-8 text-center">
+                  <Button
+                    onClick={handleDeferToggle}
+                    disabled={selectedAnswer !== undefined}
+                    className={`w-full transition-all duration-300 rounded-lg sm:rounded-xl h-10 sm:h-12 font-bold text-xs sm:text-sm lg:text-xs xl:text-sm min-w-0 ${
+                      selectedAnswer !== undefined
+                        ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
+                        : isDeferred 
+                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600' 
+                          : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600'
+                    } shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none disabled:hover:shadow-lg`}
+                    size="lg"
+                  >
+                    <Flag className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2 flex-shrink-0" />
+                    <span className="truncate">
+                      {selectedAnswer !== undefined ? 'لا يمكن التأجيل بعد الإجابة' : (isDeferred ? 'إلغاء التأجيل' : 'تأجيل السؤال')}
+                    </span>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -865,4 +875,3 @@ const QuestionDisplay = () => {
 };
 
 export default QuestionDisplay;
-
